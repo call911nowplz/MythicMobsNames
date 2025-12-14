@@ -1,0 +1,14 @@
+# MySQL Database Configuration
+database:
+  host: "localhost"
+  port: 3306
+  database: "minecraft_db"
+  username: "user"
+  password: "password123"
+  table_name: "mm_interactions"
+
+# Hologram / Proximity Settings
+hologram:
+  range: 16            # blocks
+  check-interval: 5    # ticks (5 = 0.25s)
+  symbol: ":heart:"    # hologram text

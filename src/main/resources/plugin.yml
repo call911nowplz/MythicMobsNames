@@ -1,0 +1,20 @@
+name: MythicMobsNames
+version: 0.1
+main: me.call911.mobs.MythicMobsNames
+author: Call911
+api-version: 1.21
+depend:
+  - MythicMobs
+  - ProtocolLib
+commands:
+  mmdebug:
+    description: Debug nearby entities
+    permission: mythicmobsnames.admin
+  mmresetdata:
+    description: Delete playerdata
+    usage: /mmresetdata <name>
+    permission: mythicmobsnames.admin
+  mmreload:
+    description: Reload MythicMobsNames configuration
+    usage: /mmreload
+    permission: mythicmobsnames.admin
