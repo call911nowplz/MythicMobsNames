@@ -3,6 +3,7 @@ package me.call911.mobs.player;
 import me.call911.mobs.MythicMobsNames;
 import me.call911.mobs.database.DatabaseManager;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -30,8 +31,13 @@ public class InteractionManager {
 
 
     public void recordInteraction(UUID playerUUID, String npcCustomName) {
+        String interactionKey = normalizeMobName(npcCustomName);
+        if (interactionKey == null) {
+            return;
+        }
+
         interactedNpcsCache.computeIfAbsent(playerUUID, k -> Collections.synchronizedSet(new HashSet<>()))
-                .add(npcCustomName);
+                .add(interactionKey);
 
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
             String table = databaseManager.getTableName();
@@ -41,7 +47,7 @@ public class InteractionManager {
                  PreparedStatement ps = conn.prepareStatement(query)) {
 
                 ps.setString(1, playerUUID.toString());
-                ps.setString(2, npcCustomName);
+                ps.setString(2, interactionKey);
                 ps.executeUpdate();
             } catch (SQLException e) {
                 plugin.getLogger().log(Level.SEVERE, "Error recording interaction for " + playerUUID, e);
@@ -50,6 +56,11 @@ public class InteractionManager {
     }
 
     public boolean hasInteracted(UUID playerUUID, String npcCustomName) {
+        String interactionKey = normalizeMobName(npcCustomName);
+        if (interactionKey == null) {
+            return false;
+        }
+
         Set<String> interactions = interactedNpcsCache.get(playerUUID);
 
 
@@ -57,7 +68,7 @@ public class InteractionManager {
             return false;
         }
 
-        return interactions.contains(npcCustomName);
+        return interactions.contains(interactionKey);
     }
 
 
@@ -86,7 +97,10 @@ public class InteractionManager {
             ps.setString(1, playerUUID.toString());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    mobNames.add(rs.getString("mob_name"));
+                    String interactionKey = normalizeMobName(rs.getString("mob_name"));
+                    if (interactionKey != null) {
+                        mobNames.add(interactionKey);
+                    }
                 }
             }
         }
@@ -121,5 +135,22 @@ public class InteractionManager {
                 plugin.getLogger().log(Level.SEVERE, "Error resetting interactions for " + playerUUID, e);
             }
         });
+    }
+
+    private String normalizeMobName(String mobName) {
+        if (mobName == null) {
+            return null;
+        }
+
+        String normalized = ChatColor.stripColor(
+                ChatColor.translateAlternateColorCodes('&', mobName)
+        );
+
+        if (normalized == null) {
+            return null;
+        }
+
+        normalized = normalized.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }
